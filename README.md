@@ -1,8 +1,3 @@
-# DEA-GO
-Here’s your text adjusted into a clean and organized **GitHub README** format without changing your original sentences:
-
----
-
 # Differential Expression and Gene Ontology Analysis of RNA Samples
 
 ## Project Overview
