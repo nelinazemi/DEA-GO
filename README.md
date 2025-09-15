@@ -1,8 +1,8 @@
-# Differential Expression and Gene Ontology Analysis of RNA Samples
+# Differential Expression and Gene Ontology Analysis of Arabidopsis RNA Samples
 
 ## Project Overview
 
-In this project we focus on performing **Differential Expression Analysis** as well as **Gene Ontology** on RNA samples which are either *mock* or *infected* with a certain bacteria.
+In this project we focus on performing **Differential Expression Analysis** as well as **Gene Ontology** on Arabidopsis RNA samples which are either *mock* or *infected* with a certain bacteria.
 
 Suppose we have a `.txt` file which includes the samples obtained from our experiment. Some samples are mock (our reference level); whereas the others are infected by a bacteria called *Pseudomonas syringae DC3000*. `dpi` shows the amount of days that have passed since the samples were obtained.
 
