@@ -86,7 +86,8 @@ all_genes_results %>%
   filter(padj < 0.01) %>% 
   dim()
 ```
-
+![Adjusted p-value](results/Rplot.png)
+![Unadjusted p-value](results/Rplot01.png)
 ---
 
 ## Volcano Plot Visualization
@@ -100,7 +101,7 @@ Example:
 The gene **AT4G11911** has a massive 1024x increase in expression (log2 = 10.01 → 2^10 ≈ 1024) with extremely high significance (p = 5.2e-26).
 
 Before plotting, we apply **log2 shrinkage** to reduce noise from low-count genes.
-
+![Volcano Plot](results/Rplot02.png)
 Interpretation of volcano plot:
 
 * **Top-right/left**: Strongly up/downregulated, statistically significant.
