@@ -138,20 +138,16 @@ diff_expressed_genes %>%
   dplyr::select(gene) %>% 
   write.table(., file = "diff_genes_for_agrigo.tsv", row.names = FALSE, quote = FALSE)
 ```
-
-These genes can be uploaded to **AriGO**’s SEA tool for GO analysis.
-
----
-
 ## Overrepresentation Analysis (ORA) with Ensembl and Biomartr
 
-We use Ensembl and the `biomartr` library for annotation:
-
+We use Ensembl Plants and the `biomartr` library for annotation.
 ```r
 biomartr::organismBM(organism = "Arabidopsis thaliana")
 ```
+## Defining the Gene Universe
 
 We need to define a **universe** of genes to compare our results against.
+
 Example:
 
 * Universe: 5% immune-related genes
@@ -164,6 +160,19 @@ Example:
 
 ---
 
+## Exploring Available Attributes
+
+Before retrieving annotations, we check which attributes are available for *Arabidopsis thaliana*:
+
+```r
+arabido_attributes <- biomartr::organismAttributes("Arabidopsis thaliana") %>% 
+  filter(dataset == "athaliana_eg_gene")
+
+arabido_attributes
+```
+
+---
+
 ## Mapping IDs
 
 We retrieve additional IDs such as TAIR, NCBI, and UniProt:
@@ -171,6 +180,8 @@ We retrieve additional IDs such as TAIR, NCBI, and UniProt:
 ```r
 attributes_to_retrieve = c("tair_symbol", "entrezgene_id", "uniprotswissprot")
 
+# Annotating all genes
+all_genes <- as.character(all_genes)
 all_genes_annotated <- biomartr::biomart(
   genes      = all_genes,
   mart       = "plants_mart",
@@ -178,36 +189,87 @@ all_genes_annotated <- biomartr::biomart(
   attributes = attributes_to_retrieve,
   filters    = "ensembl_gene_id"
 )
-```
 
-Repeat the same for the differentially expressed genes.
+# Annotating differentially expressed genes
+diff_expressed_genes$gene <- as.character(diff_expressed_genes$gene)
+diff_expressed_genes_annotated <- biomartr::biomart(
+  genes      = diff_expressed_genes$gene,
+  mart       = "plants_mart",
+  dataset    = "athaliana_eg_gene",
+  attributes = attributes_to_retrieve,
+  filters    = "ensembl_gene_id"
+)
+
+head(all_genes_annotated)
+head(diff_expressed_genes_annotated)
+```
 
 ---
 
-## Performing GO in R
+## Performing GO Enrichment in R
+
+We run the enrichment using `clusterProfiler::enrichGO`.
+The background universe is set to the annotated full gene set.
 
 ```r
 ora_analysis_bp <- enrichGO(
-  gene         = diff_expressed_genes$entrezgene_id,
-  universe     = all_genes$entrezgene_id,
-  OrgDb        = org.At.tair.db,
-  keyType      = "ENTREZID",
-  ont          = "BP",  # BP, CC, or MF
+  gene          = diff_expressed_genes_annotated$entrezgene_id,
+  universe      = all_genes_annotated$entrezgene_id,
+  OrgDb         = org.At.tair.db,   # TAIR/Ensembl id to GO correspondence for A. thaliana
+  keyType       = "ENTREZID",
+  ont           = "BP",             # BP = Biological Process, CC = Cellular Component, MF = Molecular Function
   pAdjustMethod = "BH",
-  qvalueCutoff = 0.05,
-  readable     = TRUE,
-  pool         = FALSE
+  qvalueCutoff  = 0.05,
+  readable      = TRUE,
+  pool          = FALSE
 )
 ```
 
-### Simplify Results
+---
+
+## Simplifying and Exporting Results
 
 ```r
 ora_analysis_bp_simplified <- clusterProfiler::simplify(ora_analysis_bp)
+
+# Save results
+write_delim(
+  x    = as.data.frame(ora_analysis_bp_simplified@result), 
+  path = "go_results.tsv", 
+  delim = "\t"
+)
+
+# Inspect top hits
+ora_analysis_bp_simplified@result[1:5, 1:8]
 ```
 
+---
 
-We can furthermore obtain more results in "CC" and "MF" by changing the parameter and running the function again.
+## Visualization
+
+We can visualize enrichment results as plots:
+
+```r
+dotplot(ora_analysis_bp_simplified)
+
+# Add pairwise semantic similarity and visualize as a network
+ora_analysis_bp <- pairwise_termsim(ora_analysis_bp, method = "JC")
+emapplot(ora_analysis_bp, color = "qvalue")
+```
+
+---
+
+## Notes
+
+* We can change `ont = "BP"` to `"CC"` or `"MF"` to analyze other ontology categories.
+* The full pipeline includes:
+
+  1. Attribute exploration
+  2. Annotation of universe + gene list
+  3. ORA with `enrichGO`
+  4. Simplification
+  5. Exporting results
+  6. Visualization
 
 ---
 
